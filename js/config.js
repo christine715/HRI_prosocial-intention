@@ -58,16 +58,14 @@ const STUDY2_CONDITIONS = [
      study1_condition1 = preprogrammed, condition2 = cost-benefit, condition3 = empathy
      study2_condition1 = altruistic,    condition2 = egoistic
 
-   Videos are played with a real HTML5 <video> tag so the app can detect
-   the actual "finished playing" moment (no timers). The URL below adds
-   "&confirm=t" to Drive's download link, which is the standard trick to
-   skip Drive's "can't scan this file" interstitial page for files that
-   would otherwise show it. Test each link in an incognito tab if a video
-   still doesn't play - see README.md for the Dropbox fallback if Drive
-   continues to cause problems for a particular file.
+   Videos are embedded via Google Drive's own preview player (an iframe),
+   since Drive's direct-download link does not reliably serve raw video
+   for a <video> tag - it intermittently returns an HTML page instead of
+   the file. The iframe preview is the format Google actually built for
+   embedding, and is the one that has reliably played in testing.
    ---------------------------------------------------------------------- */
 function driveVideoUrl(id) {
-  return `https://drive.google.com/uc?export=download&id=${id}&confirm=t`;
+  return `https://drive.google.com/file/d/${id}/preview`;
 }
 
 const VIDEO_FILES = {

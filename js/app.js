@@ -1,7 +1,7 @@
 /* =========================================================================
-   APP.js — state machine driving the study.
-   Screens: welcome -> consent -> demographics -> [context video -> (trial
-   video -> survey) x N] for each setting -> complete
+   APP.js - state machine driving the study.
+   Screens: welcome -> consent -> demographics -> [context video ->
+   (trial video + survey together) x N] for each setting -> complete
    ========================================================================= */
 
 const root = document.getElementById('app');
@@ -14,10 +14,11 @@ function freshState() {
     startedAt: new Date().toISOString(),
     screen: 'welcome',
     demographics: null,
-    sequence: null,      // built after demographics
-    cursor: 0,           // index into sequence
-    videoWatched: false, // has the current video reached 'ended' at least once
-    responses: []         // one entry per completed trial
+    sequence: null,          // built after demographics
+    cursor: 0,               // index into sequence - the participant's real forward position
+    reviewingStepIndex: null, // if set, temporarily viewing/editing an earlier trial
+    responses: [],            // one entry per completed trial
+    totalItemsAll: 0          // total questionnaire items across the whole sequence, for progress %
   };
 }
 
@@ -30,9 +31,9 @@ function shuffle(arr) {
   return a;
 }
 
-// Builds the fully counterbalanced sequence for one participant:
-// random setting order, and within each setting, an independently
-// randomized order for Study 1's three conditions and Study 2's two.
+// Builds the fully counterbalanced sequence for one participant: random
+// setting order, and within each setting, an independently randomized
+// order for Study 1's three conditions and Study 2's two.
 function buildSequence() {
   const settingOrder = shuffle(SETTINGS);
   const seq = [];
@@ -55,6 +56,17 @@ function trialNumberAt(index) {
   if (!state.sequence) return 0;
   return state.sequence.slice(0, index + 1).filter(s => s.type === 'trial').length;
 }
+function findPreviousTrialIndex(fromIndex) {
+  for (let i = fromIndex - 1; i >= 0; i--) {
+    if (state.sequence[i].type === 'trial') return i;
+  }
+  return null;
+}
+function computeTotalItemsAll() {
+  return state.sequence
+    .filter(s => s.type === 'trial')
+    .reduce((sum, s) => sum + itemIdsForStudy(s.study).length, 0);
+}
 
 /* ---------------------------- render router ---------------------------- */
 
@@ -70,6 +82,7 @@ function render() {
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
   Object.entries(attrs).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
     if (k === 'class') node.className = v;
     else if (k === 'html') node.innerHTML = v;
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
@@ -97,11 +110,11 @@ function renderWelcome() {
 
 function renderConsent() {
   root.appendChild(el('div', { class: 'card stack' }, [
-    el('p', { class: 'eyebrow' }, 'Step 1 of 3 — Consent'),
+    el('p', { class: 'eyebrow' }, 'Step 1 of 3 - Consent'),
     el('h2', {}, 'Participant Consent'),
     el('p', { class: 'body-text' }, CONFIG.CONSENT_TEXT),
     el('div', { class: 'row gap' }, [
-      el('button', { class: 'btn primary', onclick: () => { state.screen = 'demographics'; render(); } }, 'I agree, continue'),
+      el('button', { class: 'btn primary', onclick: () => { state.screen = 'demographics'; render(); } }, 'I agree, continue')
     ])
   ]));
 }
@@ -112,7 +125,7 @@ function renderDemographics() {
     let input;
     if (f.type === 'select') {
       input = el('select', { id: f.id, class: 'input' }, [
-        el('option', { value: '' }, 'Select…'),
+        el('option', { value: '' }, 'Select...'),
         ...f.options.map(o => {
           const opt = el('option', { value: o }, o);
           if (values[f.id] === o) opt.setAttribute('selected', 'selected');
@@ -129,7 +142,7 @@ function renderDemographics() {
   const errorBox = el('p', { class: 'error hidden' }, 'Please complete all fields before continuing.');
 
   root.appendChild(el('div', { class: 'card stack' }, [
-    el('p', { class: 'eyebrow' }, 'Step 2 of 3 — About you'),
+    el('p', { class: 'eyebrow' }, 'Step 2 of 3 - About you'),
     el('h2', {}, 'Demographic Survey'),
     el('div', { class: 'form-grid' }, fields),
     errorBox,
@@ -145,8 +158,9 @@ function renderDemographics() {
         if (!ok) { errorBox.classList.remove('hidden'); return; }
         state.demographics = data;
         state.sequence = buildSequence();
+        state.totalItemsAll = computeTotalItemsAll();
         state.cursor = 0;
-        state.videoWatched = false;
+        state.reviewingStepIndex = null;
         state.screen = 'sequence';
         render();
       }}, 'Continue')
@@ -155,112 +169,186 @@ function renderDemographics() {
 }
 
 function renderSequenceStep() {
-  const step = state.sequence[state.cursor];
+  const displayIndex = state.reviewingStepIndex !== null ? state.reviewingStepIndex : state.cursor;
+  const step = state.sequence[displayIndex];
   if (!step) { state.screen = 'complete'; return render(); }
-  if (step.type === 'context') return renderVideoScreen({
-    video: contextVideoPath(step.setting.id),
-    caption: 'Please watch the following scenario.',
-    onContinue: () => { state.cursor++; state.videoWatched = false; render(); }
-  });
-  // trial: show manipulation video, then survey
-  if (!state.currentTrialPhase) state.currentTrialPhase = 'video';
-
-  if (state.currentTrialPhase === 'video') {
-    const video = trialVideoPath(step.study, step.setting.id, step.condition.id);
-    return renderVideoScreen({
-      video,
-      caption: 'Please watch the robot in this clip.',
-      onContinue: () => { state.currentTrialPhase = 'survey'; state.videoWatched = false; render(); }
-    });
-  }
-
-  return renderSurveyScreen(step);
+  if (step.type === 'context') return renderContextScreen(step, displayIndex);
+  return renderTrialScreen(step, displayIndex);
 }
 
-function renderVideoScreen(opts) {
-  const trialLabel = totalTrials() ? `Scenario ${trialNumberAt(state.cursor) || trialNumberAt(state.cursor - 1) + 1} of ${totalTrials()}` : '';
-  const continueBtn = el('button', { class: 'btn primary', disabled: 'disabled' }, `Continue (${opts.video.seconds}s)`);
-  const iframe = el('iframe', {
-    class: 'study-video',
-    src: `https://drive.google.com/file/d/${opts.video.id}/preview`,
-    allow: 'autoplay',
-    frameborder: '0'
+/* ------------------------- progress bar (shared) ------------------------ */
+
+function answeredCountSoFar(extra) {
+  const fromResponses = state.responses.reduce((sum, r) => sum + Object.keys(r.answers).length, 0);
+  return fromResponses + (extra || 0);
+}
+function buildProgressBar() {
+  const label = el('p', { class: 'hint progress-label' }, '');
+  const track = el('div', { class: 'progress-track' });
+  const fill = el('div', { class: 'progress-fill' });
+  track.appendChild(fill);
+  function update(liveExtra) {
+    const answered = answeredCountSoFar(liveExtra);
+    const pct = state.totalItemsAll ? Math.min(100, Math.round((answered / state.totalItemsAll) * 100)) : 0;
+    fill.style.width = pct + '%';
+    label.textContent = `Overall progress: ${pct}%`;
+  }
+  update(0);
+  return { wrap: el('div', { class: 'progress-wrap' }, [label, track]), update };
+}
+
+/* ------------------------------ context step ----------------------------- */
+
+function renderContextScreen(step, displayIndex) {
+  const progress = buildProgressBar();
+  const continueBtn = el('button', { class: 'btn primary', disabled: 'disabled' }, 'Continue');
+  const videoHint = el('p', { class: 'error hidden' }, 'Please watch the full video (or check the box below) before continuing.');
+  const fallback = buildVideoFallback(() => {
+    continueBtn.removeAttribute('disabled');
+    videoHint.classList.add('hidden');
   });
-  continueBtn.addEventListener('click', opts.onContinue);
+
+  const video = el('video', { class: 'study-video', src: contextVideoPath(step.setting.id), controls: 'controls', playsinline: 'playsinline' });
+  video.addEventListener('ended', () => { continueBtn.removeAttribute('disabled'); videoHint.classList.add('hidden'); });
+  video.addEventListener('error', () => { fallback.box.classList.remove('hidden'); });
+
+  continueBtn.addEventListener('click', () => {
+    if (continueBtn.hasAttribute('disabled')) { videoHint.classList.remove('hidden'); return; }
+    state.cursor = displayIndex + 1;
+    render();
+  });
 
   root.appendChild(el('div', { class: 'card stack' }, [
-    el('p', { class: 'eyebrow mono' }, trialLabel || 'Scenario video'),
-    el('p', { class: 'body-text' }, opts.caption),
-    iframe,
-    el('p', { class: 'hint' }, 'Please press play and watch the full clip. The Continue button unlocks after it has had time to finish.'),
+    progress.wrap,
+    el('p', { class: 'eyebrow mono' }, 'Introduction'),
+    el('p', { class: 'body-text' }, 'Please watch the following scenario.'),
+    video,
+    fallback.box,
+    videoHint,
     el('div', { class: 'row gap' }, [continueBtn])
   ]));
-
-  let remaining = opts.video.seconds;
-  const timer = setInterval(() => {
-    remaining--;
-    if (remaining <= 0) {
-      clearInterval(timer);
-      continueBtn.textContent = 'Continue';
-      continueBtn.removeAttribute('disabled');
-    } else {
-      continueBtn.textContent = `Continue (${remaining}s)`;
-    }
-  }, 1000);
 }
 
-function renderSurveyScreen(step) {
-  const trialNum = trialNumberAt(state.cursor);
-  const answers = {};
+function buildVideoFallback(onConfirm) {
+  const checkbox = el('input', { type: 'checkbox', id: 'fallback_watched' });
+  checkbox.addEventListener('change', () => { if (checkbox.checked) onConfirm(); });
+  const box = el('div', { class: 'fallback-box hidden' }, [
+    el('p', { class: 'hint' }, "If the video above didn't load, check this box once you've watched it another way:"),
+    el('label', { class: 'checkbox-row' }, [checkbox, el('span', {}, "I have watched this video.")])
+  ]);
+  return { box, checkbox };
+}
 
-  const sections = QUESTION_SECTIONS.map(section => {
+/* -------------------------- trial (video + survey) ------------------------ */
+
+function renderTrialScreen(step, displayIndex) {
+  const isReviewing = state.reviewingStepIndex !== null;
+  const trialNum = trialNumberAt(displayIndex);
+  const existing = state.responses.find(r => r.trial_index === trialNum);
+  const answers = existing ? { ...existing.answers } : {};
+  let hasWatchedVideo = !!existing; // if we've completed this trial before, treat as already watched
+
+  const progress = buildProgressBar();
+
+  // --- condition video ---
+  const videoHint = el('p', { class: 'error hidden' }, 'Please watch the full video above (or check the box below) before submitting.');
+  const fallback = buildVideoFallback(() => { hasWatchedVideo = true; videoHint.classList.add('hidden'); });
+  const video = el('video', { class: 'study-video', src: trialVideoPath(step.study, step.setting.id, step.condition.id), controls: 'controls', playsinline: 'playsinline' });
+  video.addEventListener('ended', () => { hasWatchedVideo = true; videoHint.classList.add('hidden'); });
+  video.addEventListener('error', () => { fallback.box.classList.remove('hidden'); });
+
+  // --- rewatch context video toggle ---
+  const contextVideo = el('video', { class: 'study-video hidden', src: contextVideoPath(step.setting.id), controls: 'controls', playsinline: 'playsinline' });
+  const toggleBtn = el('button', { class: 'btn ghost small' }, 'Rewatch introduction video');
+  toggleBtn.addEventListener('click', () => {
+    contextVideo.classList.toggle('hidden');
+    toggleBtn.textContent = contextVideo.classList.contains('hidden') ? 'Rewatch introduction video' : 'Hide introduction video';
+  });
+
+  // --- survey sections (filtered by study) ---
+  const rowRefs = {}; // item_id -> row element, for invalid highlighting
+  const sections = sectionsForStudy(step.study).map(section => {
     const rows = section.items.map(item => {
-      const rowId = `q_${item.id}`;
+      const rowId = `q_${item.id}_${displayIndex}`;
       const radios = [1, 2, 3, 4, 5, 6, 7].map(v => {
-        const input = el('input', { type: 'radio', name: rowId, value: v, onchange: () => { answers[item.id] = v; } });
+        const input = el('input', { type: 'radio', name: rowId, value: v });
+        if (answers[item.id] === v) input.checked = true;
+        input.addEventListener('change', () => {
+          answers[item.id] = v;
+          row.classList.remove('invalid');
+          progress.update(Object.keys(answers).length);
+        });
         return el('label', { class: 'likert-opt' }, [input, el('span', {}, String(v))]);
       });
-      return el('div', { class: 'likert-row' }, [
+      const row = el('div', { class: 'likert-row' }, [
         el('p', { class: 'likert-text' }, item.text),
         el('div', { class: 'likert-scale' }, radios)
       ]);
+      rowRefs[item.id] = row;
+      return row;
     });
     return el('div', { class: 'section-block' }, [
       el('h3', {}, section.title),
-      el('div', { class: 'likert-anchors' }, [
-        el('span', {}, 'Strongly Disagree'),
-        el('span', {}, 'Strongly Agree')
-      ]),
+      el('div', { class: 'likert-anchors' }, [el('span', {}, 'Strongly Disagree'), el('span', {}, 'Strongly Agree')]),
       ...rows
     ]);
   });
 
-  const errorBox = el('p', { class: 'error hidden' }, 'Please answer every item before continuing.');
-  const allItemIds = QUESTION_SECTIONS.flatMap(s => s.items.map(i => i.id));
+  const allItemIds = itemIdsForStudy(step.study);
+  progress.update(Object.keys(answers).length);
+
+  const surveyErrorBox = el('p', { class: 'error hidden' }, 'Please answer the highlighted questions above.');
+
+  const backBtn = (() => {
+    const prevIndex = findPreviousTrialIndex(displayIndex);
+    if (prevIndex === null) return null;
+    const b = el('button', { class: 'btn ghost' }, 'Back');
+    b.addEventListener('click', () => { state.reviewingStepIndex = prevIndex; render(); });
+    return b;
+  })();
+
+  const primaryBtn = el('button', { class: 'btn primary' }, isReviewing ? 'Save & Return' : 'Submit & Continue');
+  primaryBtn.addEventListener('click', () => {
+    let ok = true;
+    if (!hasWatchedVideo) { videoHint.classList.remove('hidden'); ok = false; }
+    const missing = allItemIds.filter(id => answers[id] === undefined);
+    missing.forEach(id => rowRefs[id].classList.add('invalid'));
+    if (missing.length) { surveyErrorBox.classList.remove('hidden'); ok = false; } else { surveyErrorBox.classList.add('hidden'); }
+    if (!ok) { window.scrollTo(0, 0); return; }
+
+    const responseObj = {
+      trial_index: trialNum,
+      study: step.study,
+      setting_id: step.setting.id,
+      condition_id: step.condition.id, // internal, never shown to participant
+      completed_at: new Date().toISOString(),
+      answers
+    };
+    const idx = state.responses.findIndex(r => r.trial_index === trialNum);
+    if (idx >= 0) state.responses[idx] = responseObj; else state.responses.push(responseObj);
+
+    if (isReviewing) { state.reviewingStepIndex = null; }
+    else { state.cursor = displayIndex + 1; }
+    render();
+  });
 
   root.appendChild(el('div', { class: 'card stack' }, [
-    el('p', { class: 'eyebrow mono' }, `Scenario ${trialNum} of ${totalTrials()} — Questionnaire`),
+    progress.wrap,
+    el('p', { class: 'eyebrow mono' }, `Scenario ${trialNum} of ${totalTrials()}${isReviewing ? ' - reviewing' : ''}`),
+    el('p', { class: 'body-text' }, 'Please watch the robot in this clip.'),
+    video,
+    fallback.box,
+    videoHint,
+    toggleBtn,
+    el('p', { class: 'hint' }, 'You can rewatch the introduction video for this scenario at any time before submitting.'),
+    contextVideo,
     ...sections,
-    errorBox,
-    el('div', { class: 'row gap' }, [
-      el('button', { class: 'btn primary', onclick: () => {
-        if (allItemIds.some(id => answers[id] === undefined)) { errorBox.classList.remove('hidden'); window.scrollTo(0,0); return; }
-        state.responses.push({
-          trial_index: trialNum,
-          study: step.study,
-          setting_id: step.setting.id,
-          condition_id: step.condition.id, // internal, never shown to participant
-          completed_at: new Date().toISOString(),
-          answers
-        });
-        state.cursor++;
-        state.currentTrialPhase = 'video';
-        state.videoWatched = false;
-        render();
-      }}, 'Submit & Continue')
-    ])
+    surveyErrorBox,
+    el('div', { class: 'row gap' }, [backBtn, primaryBtn].filter(Boolean))
   ]));
 }
+
+/* -------------------------------- complete -------------------------------- */
 
 function renderComplete() {
   const payload = {
@@ -273,16 +361,16 @@ function renderComplete() {
 
   let submitStatus = el('p', { class: 'hint' }, '');
   if (CONFIG.SUBMIT_URL) {
-    submitStatus.textContent = 'Submitting your data…';
+    submitStatus.textContent = 'Submitting your data...';
     fetch(CONFIG.SUBMIT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     }).then(() => { submitStatus.textContent = 'Data submitted. Thank you.'; })
-      .catch(() => { submitStatus.textContent = 'Could not reach the server — please use the download buttons below as a backup.'; });
+      .catch(() => { submitStatus.textContent = 'Could not reach the server - please use the download buttons below as a backup.'; });
   } else {
-    submitStatus.textContent = 'No server configured — please download your data below and send it to the research team.';
+    submitStatus.textContent = 'No server configured - please download your data below and send it to the research team.';
   }
 
   root.appendChild(el('div', { class: 'card stack' }, [
@@ -324,6 +412,7 @@ function downloadCSV(payload) {
   payload.trials.forEach(trial => {
     allItems.forEach(item => {
       const raw = trial.answers[item.id];
+      if (raw === undefined) return; // item wasn't part of this trial's study
       const recoded = item.reverse ? (8 - raw) : raw;
       const row = [
         payload.participant_id, trial.trial_index, trial.study, trial.setting_id, trial.condition_id,

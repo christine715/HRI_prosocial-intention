@@ -76,6 +76,7 @@ function render() {
   if (state.screen === 'consent') return renderConsent();
   if (state.screen === 'demographics') return renderDemographics();
   if (state.screen === 'sequence') return renderSequenceStep();
+  if (state.screen === 'submitting') return renderSubmitting();
   if (state.screen === 'complete') return renderComplete();
 }
 
@@ -171,7 +172,7 @@ function renderDemographics() {
 function renderSequenceStep() {
   const displayIndex = state.reviewingStepIndex !== null ? state.reviewingStepIndex : state.cursor;
   const step = state.sequence[displayIndex];
-  if (!step) { state.screen = 'complete'; return render(); }
+  if (!step) { state.screen = 'submitting'; return render(); }
   if (step.type === 'context') return renderContextScreen(step, displayIndex);
   return renderTrialScreen(step, displayIndex);
 }
@@ -336,34 +337,49 @@ function renderTrialScreen(step, displayIndex) {
 
 /* -------------------------------- complete -------------------------------- */
 
-function renderComplete() {
-  const payload = {
-    participant_id: state.participantId,
-    started_at: state.startedAt,
-    finished_at: new Date().toISOString(),
-    demographics: state.demographics,
-    trials: state.responses
-  };
+function renderSubmitting() {
+  if (!state.finalPayload) {
+    state.finalPayload = {
+      participant_id: state.participantId,
+      started_at: state.startedAt,
+      finished_at: new Date().toISOString(),
+      demographics: state.demographics,
+      trials: state.responses
+    };
+    state.submitStatusText = CONFIG.SUBMIT_URL
+      ? 'Submitting your data...'
+      : 'No server configured - please download your data below and send it to the research team.';
 
-  let submitStatus = el('p', { class: 'hint' }, '');
-  if (CONFIG.SUBMIT_URL) {
-    submitStatus.textContent = 'Submitting your data...';
-    fetch(CONFIG.SUBMIT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
-    }).then(() => { submitStatus.textContent = 'Data submitted. Thank you.'; })
-      .catch(() => { submitStatus.textContent = 'Could not reach the server - please use the download buttons below as a backup.'; });
-  } else {
-    submitStatus.textContent = 'No server configured - please download your data below and send it to the research team.';
+    if (CONFIG.SUBMIT_URL) {
+      fetch(CONFIG.SUBMIT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(state.finalPayload)
+      }).then(() => { state.submitStatusText = 'Data submitted. Thank you.'; })
+        .catch(() => { state.submitStatusText = 'Could not reach the server - please use the download buttons below as a backup.'; });
+    }
+
+    setTimeout(() => { state.screen = 'complete'; render(); }, 4000);
   }
+
+  root.appendChild(el('div', { class: 'card stack' }, [
+    el('p', { class: 'eyebrow' }, 'Please wait'),
+    el('h2', {}, 'Submitting your responses...'),
+    el('p', { class: 'body-text' }, 'This will only take a moment.')
+  ]));
+}
+
+function renderComplete() {
+  const payload = state.finalPayload;
 
   root.appendChild(el('div', { class: 'card stack' }, [
     el('p', { class: 'eyebrow' }, 'Done'),
     el('h2', {}, 'Thank you for participating'),
     el('p', { class: 'body-text' }, 'Your responses have been recorded. You may now close this window.'),
-    submitStatus,
+    el('p', { class: 'body-text' }, 'This data will only be used for academic research purposes.'),
+    el('p', { class: 'body-text' }, 'If you have any questions, please contact Christine Suen at ws2765@columbia.edu.'),
+    el('p', { class: 'hint' }, state.submitStatusText),
     el('div', { class: 'row gap' }, [
       el('button', { class: 'btn ghost', onclick: () => downloadJSON(payload) }, 'Download JSON'),
       el('button', { class: 'btn ghost', onclick: () => downloadCSV(payload) }, 'Download CSV')

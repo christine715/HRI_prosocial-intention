@@ -1,4 +1,8 @@
 /* =========================================================================
+   CONFIG.js
+   Everything a researcher needs to edit lives in this file:
+   video paths, condition labels, and the questionnaire items.
+   App logic (js/app.js) should not need to change when you edit this.
    ========================================================================= */
 
 const CONFIG = {
@@ -55,34 +59,39 @@ const STUDY2_CONDITIONS = [
    Condition mapping confirmed with the researcher:
      study1_condition1 = preprogrammed, condition2 = cost-benefit, condition3 = empathy
      study2_condition1 = altruistic,    condition2 = egoistic
-   Every value below MUST be a full https:// URL, a "direct" link (not a
-   normal share-page link) — see README.md for how to convert them.
+
+   NOTE ON GOOGLE DRIVE: Drive's "uc?export=download" link format doesn't
+   reliably serve raw video for <video> playback (Google returns an HTML
+   interstitial instead). So videos are embedded via Drive's own preview
+   player (an iframe) instead. Because iframes can't report an exact
+   "video ended" moment, `seconds` below sets how long the Continue
+   button stays locked — set it to match each clip's real length.
    ---------------------------------------------------------------------- */
 const VIDEO_FILES = {
   context: {
-    social_care: 'https://drive.google.com/uc?export=download&id=1X6UYIpS6-mSna1Acj3CePO4feTI9uXCi', // context_companion_robot
-    industrial: 'https://drive.google.com/uc?export=download&id=1Dqg9ag-H17_WUmW2C4_lmhwnN3Cmjh0x'    // construction_context_video
+    social_care: { id: '1X6UYIpS6-mSna1Acj3CePO4feTI9uXCi', seconds: 40 }, // context_companion_robot
+    industrial:  { id: '1Dqg9ag-H17_WUmW2C4_lmhwnN3Cmjh0x', seconds: 40 }  // construction_context_video
   },
   study1: {
     social_care: {
-      preprogrammed: 'https://drive.google.com/uc?export=download&id=1PeXHgkJVFVK5louH9uZNNVP2DZQimuT-', // study1_condition1_companion_robot
-      costbenefit:   'https://drive.google.com/uc?export=download&id=12LHFyh38lbEAqpBbf6IvWNdHyI2K6PIW', // study1_condition2_companion_robot
-      empathy:       'https://drive.google.com/uc?export=download&id=1bu4wUZqtOzLfYl_pZrZR4wrBOngJ71pN'  // study1_condition3_companion_robot
+      preprogrammed: { id: '1PeXHgkJVFVK5louH9uZNNVP2DZQimuT-', seconds: 15 }, // study1_condition1_companion_robot
+      costbenefit:   { id: '12LHFyh38lbEAqpBbf6IvWNdHyI2K6PIW', seconds: 15 }, // study1_condition2_companion_robot
+      empathy:       { id: '1bu4wUZqtOzLfYl_pZrZR4wrBOngJ71pN', seconds: 15 }  // study1_condition3_companion_robot
     },
     industrial: {
-      preprogrammed: 'https://drive.google.com/uc?export=download&id=1f3t6duPjpoRSewuFG-p226vC4-hFG5j0', // study1_condition1_construction_robot
-      costbenefit:   'https://drive.google.com/uc?export=download&id=1PEIvuOo8CG0r89DK0pKie8PL4w9yNGGu', // study1_condition2_constrcution_robot (typo in original filename)
-      empathy:       'https://drive.google.com/uc?export=download&id=1a8tAafEIqnYW6Lne_xDWjs13gC0XdWFO'  // study1_condition3_constrcution_robot (typo in original filename)
+      preprogrammed: { id: '1f3t6duPjpoRSewuFG-p226vC4-hFG5j0', seconds: 15 }, // study1_condition1_construction_robot
+      costbenefit:   { id: '1PEIvuOo8CG0r89DK0pKie8PL4w9yNGGu', seconds: 15 }, // study1_condition2_constrcution_robot (typo in original filename)
+      empathy:       { id: '1a8tAafEIqnYW6Lne_xDWjs13gC0XdWFO', seconds: 15 }  // study1_condition3_constrcution_robot (typo in original filename)
     }
   },
   study2: {
     social_care: {
-      altruistic: 'https://drive.google.com/uc?export=download&id=1mjabI2j2qP-gZ1qcOTQnNBkcUWPR1-7E', // study2_condition1_companion_robot
-      egoistic:   'https://drive.google.com/uc?export=download&id=1j6mME3SM15KIx690oZDAk3wo4P6TYjTd'  // study2_condition2_companion_robot
+      altruistic: { id: '1mjabI2j2qP-gZ1qcOTQnNBkcUWPR1-7E', seconds: 20 }, // study2_condition1_companion_robot
+      egoistic:   { id: '1j6mME3SM15KIx690oZDAk3wo4P6TYjTd', seconds: 20 }  // study2_condition2_companion_robot
     },
     industrial: {
-      altruistic: 'https://drive.google.com/uc?export=download&id=1dVKdCMiYD49b0vXoA8zOzhrMSWBdHOr_', // study2_condition1_constrcution_robot (typo in original filename)
-      egoistic:   'https://drive.google.com/uc?export=download&id=1nJt8xY2BTKZ6j5PPZjtHF5zfj5GHdDp9'  // study2_condition2_constrcution_robot (typo in original filename)
+      altruistic: { id: '1dVKdCMiYD49b0vXoA8zOzhrMSWBdHOr_', seconds: 20 }, // study2_condition1_constrcution_robot (typo in original filename)
+      egoistic:   { id: '1nJt8xY2BTKZ6j5PPZjtHF5zfj5GHdDp9', seconds: 20 }  // study2_condition2_constrcution_robot (typo in original filename)
     }
   }
 };

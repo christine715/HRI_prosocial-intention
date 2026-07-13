@@ -110,6 +110,7 @@ h3 {
 
 .study-video {
   width: 100%;
+  height: 320px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: #000;

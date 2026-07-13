@@ -110,11 +110,48 @@ h3 {
 
 .study-video {
   width: 100%;
-  height: 320px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: #000;
 }
+.study-video.hidden { display: none; }
+
+.progress-wrap { margin-bottom: 4px; }
+.progress-label { margin: 0 0 6px; }
+.progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.fallback-box {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  background: var(--bg);
+}
+.fallback-box.hidden { display: none; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-soft); }
+.checkbox-row input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+.btn.small { padding: 8px 14px; font-size: 12px; }
+
+.likert-row.invalid {
+  background: #FBEAE8;
+  border-radius: var(--radius);
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-left: -10px;
+  margin-right: -10px;
+}
+.likert-row.invalid .likert-text { color: var(--error); font-weight: 600; }
 
 .likert-anchors {
   display: flex;

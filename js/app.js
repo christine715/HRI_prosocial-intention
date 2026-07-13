@@ -181,7 +181,7 @@ function renderSequenceStep() {
   const step = state.sequence[state.cursor];
   if (!step) { state.screen = 'complete'; return render(); }
   if (step.type === 'context') return renderVideoScreen({
-    src: contextVideoPath(step.setting.id),
+    video: contextVideoPath(step.setting.id),
     caption: 'Please watch the following scenario.',
     onContinue: () => { state.cursor++; state.videoWatched = false; render(); }
   });
@@ -189,9 +189,9 @@ function renderSequenceStep() {
   if (!state.currentTrialPhase) state.currentTrialPhase = 'video';
 
   if (state.currentTrialPhase === 'video') {
-    const src = trialVideoPath(step.study, step.setting.id, step.condition.id);
+    const video = trialVideoPath(step.study, step.setting.id, step.condition.id);
     return renderVideoScreen({
-      src,
+      video,
       caption: 'Please watch the robot in this clip.',
       onContinue: () => { state.currentTrialPhase = 'survey'; state.videoWatched = false; render(); }
     });
@@ -202,20 +202,34 @@ function renderSequenceStep() {
 
 function renderVideoScreen(opts) {
   const trialLabel = totalTrials() ? `Scenario ${trialNumberAt(state.cursor) || trialNumberAt(state.cursor - 1) + 1} of ${totalTrials()}` : '';
-  const continueBtn = el('button', { class: 'btn primary', disabled: 'disabled' }, 'Continue');
-  const video = el('video', {
-    class: 'study-video', src: opts.src, controls: 'controls', playsinline: 'playsinline'
+  const continueBtn = el('button', { class: 'btn primary', disabled: 'disabled' }, `Continue (${opts.video.seconds}s)`);
+  const iframe = el('iframe', {
+    class: 'study-video',
+    src: `https://drive.google.com/file/d/${opts.video.id}/preview`,
+    allow: 'autoplay',
+    frameborder: '0'
   });
-  video.addEventListener('ended', () => { continueBtn.removeAttribute('disabled'); });
   continueBtn.addEventListener('click', opts.onContinue);
 
   root.appendChild(el('div', { class: 'card stack' }, [
     el('p', { class: 'eyebrow mono' }, trialLabel || 'Scenario video'),
     el('p', { class: 'body-text' }, opts.caption),
-    video,
-    el('p', { class: 'hint' }, 'The Continue button unlocks once the clip has finished playing.'),
+    iframe,
+    el('p', { class: 'hint' }, 'Please press play and watch the full clip. The Continue button unlocks after it has had time to finish.'),
     el('div', { class: 'row gap' }, [continueBtn])
   ]));
+
+  let remaining = opts.video.seconds;
+  const timer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(timer);
+      continueBtn.textContent = 'Continue';
+      continueBtn.removeAttribute('disabled');
+    } else {
+      continueBtn.textContent = `Continue (${remaining}s)`;
+    }
+  }, 1000);
 }
 
 function renderSurveyScreen(step) {

@@ -6,9 +6,7 @@
 
 const root = document.getElementById('app');
 
-const STORAGE_KEY = 'robot_trust_study_session_v1';
-
-let state = loadSession() || freshState();
+let state = freshState();
 
 function freshState() {
   return {
@@ -21,19 +19,6 @@ function freshState() {
     videoWatched: false, // has the current video reached 'ended' at least once
     responses: []         // one entry per completed trial
   };
-}
-
-function saveSession() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore quota errors */ }
-}
-function loadSession() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-function clearSession() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
 }
 
 function shuffle(arr) {
@@ -74,7 +59,6 @@ function trialNumberAt(index) {
 /* ---------------------------- render router ---------------------------- */
 
 function render() {
-  saveSession();
   root.innerHTML = '';
   if (state.screen === 'welcome') return renderWelcome();
   if (state.screen === 'consent') return renderConsent();
@@ -101,19 +85,12 @@ function el(tag, attrs = {}, children = []) {
 /* ------------------------------- screens -------------------------------- */
 
 function renderWelcome() {
-  const resumeAvailable = state.cursor > 0 || state.demographics;
   root.appendChild(el('div', { class: 'card stack' }, [
     el('p', { class: 'eyebrow' }, 'HRI Trust Study'),
     el('h1', {}, CONFIG.STUDY_TITLE),
     el('p', { class: 'body-text' }, CONFIG.STUDY_INTRO),
     el('div', { class: 'row gap' }, [
-      el('button', { class: 'btn primary', onclick: () => {
-        if (resumeAvailable) { clearSession(); state = freshState(); }
-        state.screen = 'consent'; render();
-      }}, resumeAvailable ? 'Start a new session' : 'Begin'),
-      resumeAvailable ? el('button', { class: 'btn ghost', onclick: () => {
-        state.screen = state.demographics ? 'sequence' : 'demographics'; render();
-      }}, 'Resume previous session') : null
+      el('button', { class: 'btn primary', onclick: () => { state.screen = 'consent'; render(); } }, 'Begin')
     ])
   ]));
 }
@@ -286,7 +263,6 @@ function renderSurveyScreen(step) {
 }
 
 function renderComplete() {
-  clearSession();
   const payload = {
     participant_id: state.participantId,
     started_at: state.startedAt,

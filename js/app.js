@@ -201,19 +201,15 @@ function buildProgressBar() {
 
 function renderContextScreen(step, displayIndex) {
   const progress = buildProgressBar();
-  const continueBtn = el('button', { class: 'btn primary', disabled: 'disabled' }, 'Continue');
-  const videoHint = el('p', { class: 'error hidden' }, 'Please watch the full video (or check the box below) before continuing.');
-  const fallback = buildVideoFallback(() => {
-    continueBtn.removeAttribute('disabled');
-    videoHint.classList.add('hidden');
-  });
+  const continueBtn = el('button', { class: 'btn primary' }, 'Continue');
+  const videoHint = el('p', { class: 'error hidden' }, 'Please check the box below once you have watched the video.');
+  const checkbox = el('input', { type: 'checkbox', id: 'watched_context' });
+  checkbox.addEventListener('change', () => { if (checkbox.checked) videoHint.classList.add('hidden'); });
 
-  const video = el('video', { class: 'study-video', src: contextVideoPath(step.setting.id), controls: 'controls', playsinline: 'playsinline' });
-  video.addEventListener('ended', () => { continueBtn.removeAttribute('disabled'); videoHint.classList.add('hidden'); });
-  video.addEventListener('error', () => { fallback.box.classList.remove('hidden'); });
+  const iframe = el('iframe', { class: 'study-video', src: contextVideoPath(step.setting.id), allow: 'autoplay', frameborder: '0' });
 
   continueBtn.addEventListener('click', () => {
-    if (continueBtn.hasAttribute('disabled')) { videoHint.classList.remove('hidden'); return; }
+    if (!checkbox.checked) { videoHint.classList.remove('hidden'); return; }
     state.cursor = displayIndex + 1;
     render();
   });
@@ -222,21 +218,11 @@ function renderContextScreen(step, displayIndex) {
     progress.wrap,
     el('p', { class: 'eyebrow mono' }, 'Introduction'),
     el('p', { class: 'body-text' }, 'Please watch the following scenario.'),
-    video,
-    fallback.box,
+    iframe,
+    el('label', { class: 'checkbox-row' }, [checkbox, el('span', {}, 'I have watched this video.')]),
     videoHint,
     el('div', { class: 'row gap' }, [continueBtn])
   ]));
-}
-
-function buildVideoFallback(onConfirm) {
-  const checkbox = el('input', { type: 'checkbox', id: 'fallback_watched' });
-  checkbox.addEventListener('change', () => { if (checkbox.checked) onConfirm(); });
-  const box = el('div', { class: 'fallback-box hidden' }, [
-    el('p', { class: 'hint' }, "If the video above didn't load, check this box once you've watched it another way:"),
-    el('label', { class: 'checkbox-row' }, [checkbox, el('span', {}, "I have watched this video.")])
-  ]);
-  return { box, checkbox };
 }
 
 /* -------------------------- trial (video + survey) ------------------------ */
@@ -251,18 +237,18 @@ function renderTrialScreen(step, displayIndex) {
   const progress = buildProgressBar();
 
   // --- condition video ---
-  const videoHint = el('p', { class: 'error hidden' }, 'Please watch the full video above (or check the box below) before submitting.');
-  const fallback = buildVideoFallback(() => { hasWatchedVideo = true; videoHint.classList.add('hidden'); });
-  const video = el('video', { class: 'study-video', src: trialVideoPath(step.study, step.setting.id, step.condition.id), controls: 'controls', playsinline: 'playsinline' });
-  video.addEventListener('ended', () => { hasWatchedVideo = true; videoHint.classList.add('hidden'); });
-  video.addEventListener('error', () => { fallback.box.classList.remove('hidden'); });
+  const videoHint = el('p', { class: 'error hidden' }, 'Please check the box below once you have watched the video.');
+  const watchedCheckbox = el('input', { type: 'checkbox', id: 'watched_trial_' + displayIndex });
+  if (hasWatchedVideo) watchedCheckbox.checked = true;
+  watchedCheckbox.addEventListener('change', () => { hasWatchedVideo = watchedCheckbox.checked; if (hasWatchedVideo) videoHint.classList.add('hidden'); });
+  const iframe = el('iframe', { class: 'study-video', src: trialVideoPath(step.study, step.setting.id, step.condition.id), allow: 'autoplay', frameborder: '0' });
 
   // --- rewatch context video toggle ---
-  const contextVideo = el('video', { class: 'study-video hidden', src: contextVideoPath(step.setting.id), controls: 'controls', playsinline: 'playsinline' });
+  const contextIframe = el('iframe', { class: 'study-video hidden', src: contextVideoPath(step.setting.id), allow: 'autoplay', frameborder: '0' });
   const toggleBtn = el('button', { class: 'btn ghost small' }, 'Rewatch introduction video');
   toggleBtn.addEventListener('click', () => {
-    contextVideo.classList.toggle('hidden');
-    toggleBtn.textContent = contextVideo.classList.contains('hidden') ? 'Rewatch introduction video' : 'Hide introduction video';
+    contextIframe.classList.toggle('hidden');
+    toggleBtn.textContent = contextIframe.classList.contains('hidden') ? 'Rewatch introduction video' : 'Hide introduction video';
   });
 
   // --- survey sections (filtered by study) ---
@@ -336,12 +322,12 @@ function renderTrialScreen(step, displayIndex) {
     progress.wrap,
     el('p', { class: 'eyebrow mono' }, `Scenario ${trialNum} of ${totalTrials()}${isReviewing ? ' - reviewing' : ''}`),
     el('p', { class: 'body-text' }, 'Please watch the robot in this clip.'),
-    video,
-    fallback.box,
+    iframe,
+    el('label', { class: 'checkbox-row' }, [watchedCheckbox, el('span', {}, 'I have watched this video.')]),
     videoHint,
     toggleBtn,
     el('p', { class: 'hint' }, 'You can rewatch the introduction video for this scenario at any time before submitting.'),
-    contextVideo,
+    contextIframe,
     ...sections,
     surveyErrorBox,
     el('div', { class: 'row gap' }, [backBtn, primaryBtn].filter(Boolean))

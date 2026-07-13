@@ -10,7 +10,7 @@ const CONFIG = {
   // participant's data to a Google Sheet. Leave as '' to skip network
   // submission and rely on the in-browser JSON/CSV download only.
   // See README.md > "Collecting data centrally" for setup steps.
-  SUBMIT_URL: '',
+  SUBMIT_URL: 'https://script.google.com/macros/s/AKfycby8HXlrtf4lYCzI8cmSPV465yYNZaf-TIH6Yy1QugNbaVrYvtylDzIFr0N5kHyP4YL3OA/exec',
 
   STUDY_TITLE: 'Human-Robot Interaction Study in Trust',
   STUDY_INTRO: `You will watch a series of short video clips showing a robot

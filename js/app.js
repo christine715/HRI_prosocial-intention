@@ -181,7 +181,7 @@ function renderSequenceStep() {
   const step = state.sequence[state.cursor];
   if (!step) { state.screen = 'complete'; return render(); }
   if (step.type === 'context') return renderVideoScreen({
-    src: step.setting.context,
+    src: contextVideoPath(step.setting.id),
     caption: 'Please watch the following scenario.',
     onContinue: () => { state.cursor++; state.videoWatched = false; render(); }
   });
@@ -189,7 +189,7 @@ function renderSequenceStep() {
   if (!state.currentTrialPhase) state.currentTrialPhase = 'video';
 
   if (state.currentTrialPhase === 'video') {
-    const src = trialVideoPath(step.study, step.setting.id, step.condition.file);
+    const src = trialVideoPath(step.study, step.setting.id, step.condition.id);
     return renderVideoScreen({
       src,
       caption: 'Please watch the robot in this clip.',

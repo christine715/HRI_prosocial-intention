@@ -12,11 +12,10 @@ const CONFIG = {
   // See README.md > "Collecting data centrally" for setup steps.
   SUBMIT_URL: '',
 
-  // Shown on the welcome screen. Edit freely.
-  STUDY_TITLE: 'Robot Assistance Study',
+  STUDY_TITLE: 'Human-Robot Interaction Study in Trust',
   STUDY_INTRO: `You will watch a series of short video clips showing a robot
     helping a person, then answer a few questions about each clip.
-    There are no right or wrong answers — please respond based on your
+    There are no right or wrong answers - please respond based on your
     honest impressions.`,
 
   CONSENT_TEXT: `By clicking "I agree" you confirm that you are 18 years of
@@ -35,7 +34,7 @@ const SETTINGS = [
 ];
 
 /* -------------------------------------------------------------------------
-   STUDY 1 conditions — motivational autonomy (preprogrammed / cost-benefit /
+   STUDY 1 conditions - motivational autonomy (preprogrammed / cost-benefit /
    empathy-driven). Internal ids are recorded in the data but NEVER shown
    to participants, to avoid tipping them off to the manipulation.
    ---------------------------------------------------------------------- */
@@ -46,7 +45,7 @@ const STUDY1_CONDITIONS = [
 ];
 
 /* -------------------------------------------------------------------------
-   STUDY 2 conditions — motivational orientation (altruistic / egoistic).
+   STUDY 2 conditions - motivational orientation (altruistic / egoistic).
    ---------------------------------------------------------------------- */
 const STUDY2_CONDITIONS = [
   { id: 'altruistic' },
@@ -54,44 +53,48 @@ const STUDY2_CONDITIONS = [
 ];
 
 /* -------------------------------------------------------------------------
-   VIDEO URLS — paste your direct Dropbox/Drive links here (see README.md
-   > "Hosting large videos externally" for exactly how to get these).
+   VIDEO FILES (Google Drive)
    Condition mapping confirmed with the researcher:
      study1_condition1 = preprogrammed, condition2 = cost-benefit, condition3 = empathy
      study2_condition1 = altruistic,    condition2 = egoistic
 
-   NOTE ON GOOGLE DRIVE: Drive's "uc?export=download" link format doesn't
-   reliably serve raw video for <video> playback (Google returns an HTML
-   interstitial instead). So videos are embedded via Drive's own preview
-   player (an iframe) instead. Because iframes can't report an exact
-   "video ended" moment, `seconds` below sets how long the Continue
-   button stays locked — set it to match each clip's real length.
+   Videos are played with a real HTML5 <video> tag so the app can detect
+   the actual "finished playing" moment (no timers). The URL below adds
+   "&confirm=t" to Drive's download link, which is the standard trick to
+   skip Drive's "can't scan this file" interstitial page for files that
+   would otherwise show it. Test each link in an incognito tab if a video
+   still doesn't play - see README.md for the Dropbox fallback if Drive
+   continues to cause problems for a particular file.
    ---------------------------------------------------------------------- */
+function driveVideoUrl(id) {
+  return `https://drive.google.com/uc?export=download&id=${id}&confirm=t`;
+}
+
 const VIDEO_FILES = {
   context: {
-    social_care: { id: '1X6UYIpS6-mSna1Acj3CePO4feTI9uXCi', seconds: 40 }, // context_companion_robot
-    industrial:  { id: '1Dqg9ag-H17_WUmW2C4_lmhwnN3Cmjh0x', seconds: 40 }  // construction_context_video
+    social_care: driveVideoUrl('1X6UYIpS6-mSna1Acj3CePO4feTI9uXCi'), // context_companion_robot
+    industrial:  driveVideoUrl('1Dqg9ag-H17_WUmW2C4_lmhwnN3Cmjh0x')  // construction_context_video
   },
   study1: {
     social_care: {
-      preprogrammed: { id: '1PeXHgkJVFVK5louH9uZNNVP2DZQimuT-', seconds: 15 }, // study1_condition1_companion_robot
-      costbenefit:   { id: '12LHFyh38lbEAqpBbf6IvWNdHyI2K6PIW', seconds: 15 }, // study1_condition2_companion_robot
-      empathy:       { id: '1bu4wUZqtOzLfYl_pZrZR4wrBOngJ71pN', seconds: 15 }  // study1_condition3_companion_robot
+      preprogrammed: driveVideoUrl('1PeXHgkJVFVK5louH9uZNNVP2DZQimuT-'), // study1_condition1_companion_robot
+      costbenefit:   driveVideoUrl('12LHFyh38lbEAqpBbf6IvWNdHyI2K6PIW'), // study1_condition2_companion_robot
+      empathy:       driveVideoUrl('1bu4wUZqtOzLfYl_pZrZR4wrBOngJ71pN')  // study1_condition3_companion_robot
     },
     industrial: {
-      preprogrammed: { id: '1f3t6duPjpoRSewuFG-p226vC4-hFG5j0', seconds: 15 }, // study1_condition1_construction_robot
-      costbenefit:   { id: '1PEIvuOo8CG0r89DK0pKie8PL4w9yNGGu', seconds: 15 }, // study1_condition2_constrcution_robot (typo in original filename)
-      empathy:       { id: '1a8tAafEIqnYW6Lne_xDWjs13gC0XdWFO', seconds: 15 }  // study1_condition3_constrcution_robot (typo in original filename)
+      preprogrammed: driveVideoUrl('1f3t6duPjpoRSewuFG-p226vC4-hFG5j0'), // study1_condition1_construction_robot
+      costbenefit:   driveVideoUrl('1PEIvuOo8CG0r89DK0pKie8PL4w9yNGGu'), // study1_condition2_constrcution_robot (typo in original filename)
+      empathy:       driveVideoUrl('1a8tAafEIqnYW6Lne_xDWjs13gC0XdWFO')  // study1_condition3_constrcution_robot (typo in original filename)
     }
   },
   study2: {
     social_care: {
-      altruistic: { id: '1mjabI2j2qP-gZ1qcOTQnNBkcUWPR1-7E', seconds: 20 }, // study2_condition1_companion_robot
-      egoistic:   { id: '1j6mME3SM15KIx690oZDAk3wo4P6TYjTd', seconds: 20 }  // study2_condition2_companion_robot
+      altruistic: driveVideoUrl('1mjabI2j2qP-gZ1qcOTQnNBkcUWPR1-7E'), // study2_condition1_companion_robot
+      egoistic:   driveVideoUrl('1j6mME3SM15KIx690oZDAk3wo4P6TYjTd')  // study2_condition2_companion_robot
     },
     industrial: {
-      altruistic: { id: '1dVKdCMiYD49b0vXoA8zOzhrMSWBdHOr_', seconds: 20 }, // study2_condition1_constrcution_robot (typo in original filename)
-      egoistic:   { id: '1nJt8xY2BTKZ6j5PPZjtHF5zfj5GHdDp9', seconds: 20 }  // study2_condition2_constrcution_robot (typo in original filename)
+      altruistic: driveVideoUrl('1dVKdCMiYD49b0vXoA8zOzhrMSWBdHOr_'), // study2_condition1_constrcution_robot (typo in original filename)
+      egoistic:   driveVideoUrl('1nJt8xY2BTKZ6j5PPZjtHF5zfj5GHdDp9')  // study2_condition2_constrcution_robot (typo in original filename)
     }
   }
 };
@@ -127,15 +130,21 @@ const DEMOGRAPHIC_FIELDS = [
 ];
 
 /* -------------------------------------------------------------------------
-   QUESTIONNAIRE — shown in full after every trial video.
-   Scale is fixed 1–7 (Strongly Disagree → Strongly Agree).
+   QUESTIONNAIRE
+   Scale is fixed 1-7 (Strongly Disagree -> Strongly Agree).
    `reverse: true` items are reverse-scored during CSV export
    (recoded value = 8 - raw value) but raw values are also kept.
+
+   `studies` tags which study each section applies to:
+     - Trust & Continued Interaction, Ability & Benevolence: shown for BOTH studies
+     - Perceived Motivation for Helping: STUDY 1 ONLY (manipulation check for autonomy)
+     - Perceived Altruism & Egoism: STUDY 2 ONLY (manipulation check for orientation)
    ---------------------------------------------------------------------- */
 const QUESTION_SECTIONS = [
   {
     id: 'trust_interaction',
     title: 'Trust & Continued Interaction',
+    studies: [1, 2],
     items: [
       { id: 'ti1', text: 'I would be willing to accept help from this robot.' },
       { id: 'ti2', text: "I would feel comfortable relying on this robot's assistance." },
@@ -148,6 +157,7 @@ const QUESTION_SECTIONS = [
   {
     id: 'abi',
     title: 'Ability & Benevolence',
+    studies: [1, 2],
     items: [
       { id: 'ab1', text: 'The robot is very capable of performing its job.' },
       { id: 'ab2', text: 'The robot is known to be successful at the things it tries to do.' },
@@ -165,6 +175,7 @@ const QUESTION_SECTIONS = [
   {
     id: 'motivation',
     title: 'Perceived Motivation for Helping',
+    studies: [1],
     items: [
       { id: 'm1', text: 'The robot helped because it cared about the person.' },
       { id: 'm2', text: 'The robot helped because it valued acting this way.' },
@@ -180,6 +191,7 @@ const QUESTION_SECTIONS = [
   {
     id: 'altruism_egoism',
     title: 'Perceived Altruism & Egoism',
+    studies: [2],
     items: [
       { id: 'al1', text: "The robot's help seemed genuinely focused on benefiting the other person." },
       { id: 'al2', text: "This robot appeared to act in the person's interest, not its own." },
@@ -193,3 +205,10 @@ const QUESTION_SECTIONS = [
     ]
   }
 ];
+
+function sectionsForStudy(study) {
+  return QUESTION_SECTIONS.filter(s => s.studies.includes(study));
+}
+function itemIdsForStudy(study) {
+  return sectionsForStudy(study).flatMap(s => s.items.map(i => i.id));
+}

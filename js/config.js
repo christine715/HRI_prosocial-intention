@@ -1,8 +1,4 @@
 /* =========================================================================
-   CONFIG.js
-   Everything a researcher needs to edit lives in this file:
-   video paths, condition labels, and the questionnaire items.
-   App logic (js/app.js) should not need to change when you edit this.
    ========================================================================= */
 
 const CONFIG = {
@@ -28,11 +24,10 @@ const CONFIG = {
 
 /* -------------------------------------------------------------------------
    HRI SETTINGS (counterbalanced order)
-   context: the ~40s scenario-establishing video, shown once per setting
    ---------------------------------------------------------------------- */
 const SETTINGS = [
-  { id: 'social_care', label: 'Social-care scenario', context: 'videos/context_social_care.mp4' },
-  { id: 'industrial',  label: 'Industrial scenario',  context: 'videos/context_industrial.mp4' }
+  { id: 'social_care', label: 'Social-care scenario' }, // companion robot
+  { id: 'industrial',  label: 'Industrial scenario'  }  // construction robot
 ];
 
 /* -------------------------------------------------------------------------
@@ -41,24 +36,62 @@ const SETTINGS = [
    to participants, to avoid tipping them off to the manipulation.
    ---------------------------------------------------------------------- */
 const STUDY1_CONDITIONS = [
-  { id: 'preprogrammed', file: 'preprogrammed' },
-  { id: 'costbenefit',   file: 'costbenefit' },
-  { id: 'empathy',       file: 'empathy' }
+  { id: 'preprogrammed' },
+  { id: 'costbenefit'   },
+  { id: 'empathy'       }
 ];
 
 /* -------------------------------------------------------------------------
    STUDY 2 conditions — motivational orientation (altruistic / egoistic).
    ---------------------------------------------------------------------- */
 const STUDY2_CONDITIONS = [
-  { id: 'altruistic', file: 'altruistic' },
-  { id: 'egoistic',   file: 'egoistic' }
+  { id: 'altruistic' },
+  { id: 'egoistic'   }
 ];
 
-// Builds the expected video file path for a given trial.
-// Study 1: videos/s1_<setting>_<condition>.mp4
-// Study 2: videos/s2_<setting>_<condition>.mp4
-function trialVideoPath(study, settingId, conditionFile) {
-  return `videos/s${study}_${settingId}_${conditionFile}.mp4`;
+/* -------------------------------------------------------------------------
+   VIDEO URLS — paste your direct Dropbox/Drive links here (see README.md
+   > "Hosting large videos externally" for exactly how to get these).
+   Condition mapping confirmed with the researcher:
+     study1_condition1 = preprogrammed, condition2 = cost-benefit, condition3 = empathy
+     study2_condition1 = altruistic,    condition2 = egoistic
+   Every value below MUST be a full https:// URL, a "direct" link (not a
+   normal share-page link) — see README.md for how to convert them.
+   ---------------------------------------------------------------------- */
+const VIDEO_FILES = {
+  context: {
+    social_care: 'https://drive.google.com/uc?export=download&id=1X6UYIpS6-mSna1Acj3CePO4feTI9uXCi', // context_companion_robot
+    industrial: 'https://drive.google.com/uc?export=download&id=1Dqg9ag-H17_WUmW2C4_lmhwnN3Cmjh0x'    // construction_context_video
+  },
+  study1: {
+    social_care: {
+      preprogrammed: 'https://drive.google.com/uc?export=download&id=1PeXHgkJVFVK5louH9uZNNVP2DZQimuT-', // study1_condition1_companion_robot
+      costbenefit:   'https://drive.google.com/uc?export=download&id=12LHFyh38lbEAqpBbf6IvWNdHyI2K6PIW', // study1_condition2_companion_robot
+      empathy:       'https://drive.google.com/uc?export=download&id=1bu4wUZqtOzLfYl_pZrZR4wrBOngJ71pN'  // study1_condition3_companion_robot
+    },
+    industrial: {
+      preprogrammed: 'https://drive.google.com/uc?export=download&id=1f3t6duPjpoRSewuFG-p226vC4-hFG5j0', // study1_condition1_construction_robot
+      costbenefit:   'https://drive.google.com/uc?export=download&id=1PEIvuOo8CG0r89DK0pKie8PL4w9yNGGu', // study1_condition2_constrcution_robot (typo in original filename)
+      empathy:       'https://drive.google.com/uc?export=download&id=1a8tAafEIqnYW6Lne_xDWjs13gC0XdWFO'  // study1_condition3_constrcution_robot (typo in original filename)
+    }
+  },
+  study2: {
+    social_care: {
+      altruistic: 'https://drive.google.com/uc?export=download&id=1mjabI2j2qP-gZ1qcOTQnNBkcUWPR1-7E', // study2_condition1_companion_robot
+      egoistic:   'https://drive.google.com/uc?export=download&id=1j6mME3SM15KIx690oZDAk3wo4P6TYjTd'  // study2_condition2_companion_robot
+    },
+    industrial: {
+      altruistic: 'https://drive.google.com/uc?export=download&id=1dVKdCMiYD49b0vXoA8zOzhrMSWBdHOr_', // study2_condition1_constrcution_robot (typo in original filename)
+      egoistic:   'https://drive.google.com/uc?export=download&id=1nJt8xY2BTKZ6j5PPZjtHF5zfj5GHdDp9'  // study2_condition2_constrcution_robot (typo in original filename)
+    }
+  }
+};
+
+function contextVideoPath(settingId) {
+  return VIDEO_FILES.context[settingId];
+}
+function trialVideoPath(study, settingId, conditionId) {
+  return VIDEO_FILES['study' + study][settingId][conditionId];
 }
 
 /* -------------------------------------------------------------------------

@@ -134,7 +134,7 @@ function renderDemographics() {
         })
       ]);
     } else {
-      input = el('input', { id: f.id, class: 'input', type: f.type, min: f.min, max: f.max });
+      input = el('input', { id: f.id, class: 'input', type: f.type, min: f.min, max: f.max, placeholder: f.placeholder });
       if (values[f.id]) input.value = values[f.id];
     }
     return el('label', { class: 'field' }, [el('span', {}, f.label), input]);

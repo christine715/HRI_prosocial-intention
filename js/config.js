@@ -108,6 +108,10 @@ function trialVideoPath(study, settingId, conditionId) {
    DEMOGRAPHICS FORM
    ---------------------------------------------------------------------- */
 const DEMOGRAPHIC_FIELDS = [
+   {
+    id: 'prolific_id', label: 'Prolific ID', type: 'text', required: true,
+    placeholder: 'Your Prolific ID'
+  },
   { id: 'age', label: 'Age', type: 'number', min: 18, max: 100, required: true },
   {
     id: 'gender', label: 'Gender', type: 'select', required: true,

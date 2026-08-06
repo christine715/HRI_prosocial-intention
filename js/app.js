@@ -376,13 +376,15 @@ function renderComplete() {
   root.appendChild(el('div', { class: 'card stack' }, [
     el('p', { class: 'eyebrow' }, 'Done'),
     el('h2', {}, 'Thank you for participating'),
-    el('p', { class: 'body-text' }, 'Your responses have been recorded. You may now close this window.'),
+    el('p', { class: 'body-text' }, 'Your responses have been recorded.'),
     el('p', { class: 'body-text' }, 'This data will only be used for academic research purposes.'),
-    el('p', { class: 'body-text' }, 'If you have any questions, please contact Christine Suen at ws2765@columbia.edu.'),
+   el('p', { class: 'body-text' }, 'To confirm your completion on Prolific, click the link below, or enter this completion code on Prolific yourself:'),
+   el('p', {}, [ el('a', { href: CONFIG.PROLIFIC_COMPLETION_URL }, CONFIG.PROLIFIC_COMPLETION_URL) ]),
+   el('p', {}, [ el('code', { class: 'completion-code' }, CONFIG.PROLIFIC_COMPLETION_CODE) ]),
     el('p', { class: 'hint' }, state.submitStatusText),
     el('div', { class: 'row gap' }, [
-      el('button', { class: 'btn ghost', onclick: () => downloadJSON(payload) }, 'Download JSON'),
-      el('button', { class: 'btn ghost', onclick: () => downloadCSV(payload) }, 'Download CSV')
+      // el('button', { class: 'btn ghost', onclick: () => downloadJSON(payload) }, 'Download JSON'),
+      // el('button', { class: 'btn ghost', onclick: () => downloadCSV(payload) }, 'Download CSV')
     ])
   ]));
 }

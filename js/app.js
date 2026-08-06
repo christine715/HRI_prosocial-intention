@@ -354,6 +354,7 @@ function renderSubmitting() {
       fetch(CONFIG.SUBMIT_URL, {
         method: 'POST',
         mode: 'no-cors',
+         keepalive: true,
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(state.finalPayload)
       }).then(() => { state.submitStatusText = 'Data submitted. Thank you.'; })

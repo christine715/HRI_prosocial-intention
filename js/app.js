@@ -350,27 +350,34 @@ function renderSubmitting() {
       ? 'Submitting your data...'
       : 'No server configured - please download your data below and send it to the research team.';
 
+    var goToComplete = function () { state.screen = 'complete'; render(); };
+
     if (CONFIG.SUBMIT_URL) {
-      fetch(CONFIG.SUBMIT_URL, {
+      var submitDone = fetch(CONFIG.SUBMIT_URL, {
         method: 'POST',
         mode: 'no-cors',
-         keepalive: true,
+        keepalive: true,
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(state.finalPayload)
-      }).then(() => { state.submitStatusText = 'Data submitted. Thank you.'; })
-        .catch(() => { state.submitStatusText = 'Could not reach the server - please use the download buttons below as a backup.'; });
-    }
+      }).then(function () { state.submitStatusText = 'Data submitted. Thank you.'; })
+        .catch(function () { state.submitStatusText = 'Could not reach the server - please use the download buttons below as a backup.'; });
 
-    setTimeout(() => { state.screen = 'complete'; render(); }, 4000);
+      // Wait for the real network request to finish, but don't let the
+      // participant get stuck forever if their connection stalls entirely.
+      var safetyTimeout = new Promise(function (resolve) { setTimeout(resolve, 10000); });
+      Promise.race([submitDone, safetyTimeout]).then(goToComplete);
+    } else {
+      setTimeout(goToComplete, 1500);
+    }
   }
 
   root.appendChild(el('div', { class: 'card stack' }, [
     el('p', { class: 'eyebrow' }, 'Please wait'),
     el('h2', {}, 'Submitting your responses...'),
-    el('p', { class: 'body-text' }, 'This will only take a moment.')
+    el('p', { class: 'body-text' }, 'This will only take a moment.'),
+    el('p', { class: 'body-text' }, 'Please do not close this browser window or tab yet. Wait until you reach the final "Thank you" page and see your Prolific completion code before closing.')
   ]));
 }
-
 function renderComplete() {
   const payload = state.finalPayload;
 

@@ -22,8 +22,8 @@ const CONFIG = {
     age or older, that you have read the participant information, and that
     you voluntarily agree to take part in this study. Your responses are
     confidential and will be used for research purposes only. You may
-    withdraw at any time by closing this window.`
-
+    withdraw at any time by closing this window.`,
+   
    PROLIFIC_COMPLETION_CODE: 'CKTZPFUF',
    PROLIFIC_COMPLETION_URL: 'https://app.prolific.com/submissions/complete?cc=CKTZPFUF'
 };

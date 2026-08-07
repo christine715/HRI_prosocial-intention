@@ -13,8 +13,9 @@ const CONFIG = {
   SUBMIT_URL: 'https://script.google.com/macros/s/AKfycby8HXlrtf4lYCzI8cmSPV465yYNZaf-TIH6Yy1QugNbaVrYvtylDzIFr0N5kHyP4YL3OA/exec',
 
   STUDY_TITLE: 'Human-Robot Interaction Study in Trust',
-  STUDY_INTRO: `You will watch a series of short video clips showing a robot
-    helping a person, then answer a few questions about each clip.
+  STUDY_INTRO: `You will watch a series of short video clips showing a robot assisting a person. 
+  As you watch each clip, please vividly imagine yourself in the role of the person interacting with the robot. 
+  After each clip, you will be asked a few questions about your experience.
     There are no right or wrong answers - please respond based on your
     honest impressions.`,
 

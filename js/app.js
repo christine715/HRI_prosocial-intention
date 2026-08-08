@@ -72,13 +72,13 @@ function computeTotalItemsAll() {
 
 function render() {
   root.innerHTML = '';
-   window.scrollTo(0, 0);
-  if (state.screen === 'welcome') return renderWelcome();
-  if (state.screen === 'consent') return renderConsent();
-  if (state.screen === 'demographics') return renderDemographics();
-  if (state.screen === 'sequence') return renderSequenceStep();
-  if (state.screen === 'submitting') return renderSubmitting();
-  if (state.screen === 'complete') return renderComplete();
+  if (state.screen === 'welcome') renderWelcome();
+  else if (state.screen === 'consent') renderConsent();
+  else if (state.screen === 'demographics') renderDemographics();
+  else if (state.screen === 'sequence') renderSequenceStep();
+  else if (state.screen === 'submitting') renderSubmitting();
+  else if (state.screen === 'complete') renderComplete();
+  requestAnimationFrame(() => window.scrollTo(0, 0));
 }
 
 function el(tag, attrs = {}, children = []) {

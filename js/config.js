@@ -181,7 +181,7 @@ const QUESTION_SECTIONS = [
   {
     id: 'motivation',
     title: 'Perceived Motivation for Helping',
-    studies: [1],
+    studies: [1,2],
     items: [
       { id: 'm1', text: 'The robot helped because it cared about the person.' },
       { id: 'm2', text: 'The robot helped because it valued acting this way.' },

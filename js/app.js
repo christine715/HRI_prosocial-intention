@@ -72,6 +72,7 @@ function computeTotalItemsAll() {
 
 function render() {
   root.innerHTML = '';
+   window.scrollTo(0, 0);
   if (state.screen === 'welcome') return renderWelcome();
   if (state.screen === 'consent') return renderConsent();
   if (state.screen === 'demographics') return renderDemographics();

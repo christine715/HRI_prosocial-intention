@@ -285,6 +285,32 @@ function renderTrialScreen(step, displayIndex) {
   const allItemIds = itemIdsForStudy(step.study);
   progress.update(Object.keys(answers).length);
 
+  // --- attention check (only on the Study 1 "empathy" trial, per setting) ---
+  const attentionCheck = attentionCheckFor(step.study, step.setting.id, step.condition.id);
+  let attentionAnswer = existing && existing.attention_check ? existing.attention_check.response : undefined;
+  let attentionRowRef = null;
+  const attentionBlock = attentionCheck ? (() => {
+    const rowId = `attn_${step.setting.id}_${displayIndex}`;
+    const options = attentionCheck.options.map(opt => {
+      const input = el('input', { type: 'radio', name: rowId, value: opt.value });
+      if (attentionAnswer === opt.value) input.checked = true;
+      input.addEventListener('change', () => {
+        attentionAnswer = opt.value;
+        attentionRow.classList.remove('invalid');
+      });
+      return el('label', { class: 'attn-opt' }, [input, el('span', {}, opt.text)]);
+    });
+    const attentionRow = el('div', { class: 'attn-options' }, options);
+    attentionRowRef = el('div', { class: 'attn-block' }, [
+      el('p', { class: 'likert-text' }, attentionCheck.question),
+      attentionRow
+    ]);
+    return el('div', { class: 'section-block attn-section' }, [
+      el('h3', {}, 'Attention Check'),
+      attentionRowRef
+    ]);
+  })() : null;
+
   const surveyErrorBox = el('p', { class: 'error hidden' }, 'Please answer the highlighted questions above.');
 
   const backBtn = (() => {
@@ -302,6 +328,13 @@ function renderTrialScreen(step, displayIndex) {
     const missing = allItemIds.filter(id => answers[id] === undefined);
     missing.forEach(id => rowRefs[id].classList.add('invalid'));
     if (missing.length) { surveyErrorBox.classList.remove('hidden'); ok = false; } else { surveyErrorBox.classList.add('hidden'); }
+
+    if (attentionCheck && attentionAnswer === undefined) {
+      attentionRowRef.classList.add('invalid');
+      surveyErrorBox.classList.remove('hidden');
+      ok = false;
+    }
+
     if (!ok) { window.scrollTo(0, 0); return; }
 
     const responseObj = {
@@ -310,7 +343,13 @@ function renderTrialScreen(step, displayIndex) {
       setting_id: step.setting.id,
       condition_id: step.condition.id, // internal, never shown to participant
       completed_at: new Date().toISOString(),
-      answers
+      answers,
+      attention_check: attentionCheck ? {
+        question: attentionCheck.question,
+        response: attentionAnswer,
+        correct: attentionCheck.correct,
+        passed: attentionAnswer === attentionCheck.correct
+      } : null
     };
     const idx = state.responses.findIndex(r => r.trial_index === trialNum);
     if (idx >= 0) state.responses[idx] = responseObj; else state.responses.push(responseObj);
@@ -331,6 +370,7 @@ function renderTrialScreen(step, displayIndex) {
     el('p', { class: 'hint' }, 'You can rewatch the introduction video for this scenario at any time before submitting.'),
     contextIframe,
     ...sections,
+    attentionBlock,
     surveyErrorBox,
     el('div', { class: 'row gap' }, [backBtn, primaryBtn].filter(Boolean))
   ]));
@@ -419,10 +459,12 @@ function downloadCSV(payload) {
   const header = [
     'participant_id', 'trial_index', 'study', 'setting_id', 'condition_id',
     'section', 'item_id', 'item_text', 'raw_value', 'reverse_scored', 'recoded_value',
+    'attn_check_response',
     ...demoKeys.map(k => `demo_${k}`)
   ];
   const rows = [header.join(',')];
   payload.trials.forEach(trial => {
+    const ac = trial.attention_check || null;
     allItems.forEach(item => {
       const raw = trial.answers[item.id];
       if (raw === undefined) return; // item wasn't part of this trial's study
@@ -430,6 +472,9 @@ function downloadCSV(payload) {
       const row = [
         payload.participant_id, trial.trial_index, trial.study, trial.setting_id, trial.condition_id,
         item.section, item.id, csvEscape(item.text), raw, !!item.reverse, recoded,
+        // repeated on every item row of trials that had an attention check
+        // (the empathy-condition trials), blank otherwise.
+        ac ? ac.response : '',
         ...demoKeys.map(k => csvEscape(payload.demographics[k]))
       ];
       rows.push(row.join(','));

@@ -231,20 +231,20 @@ function itemIdsForStudy(study) {
    ---------------------------------------------------------------------- */
 const ATTENTION_CHECKS = {
   social_care: {
-    question: 'What is happening in the video you just watched?',
+    question: 'What happened in the video you watched?',
     options: [
-      { value: 1, text: 'The robot is offering apples to the human.' },
-      { value: 2, text: 'The robot is inviting the human to play badminton.' },
+      { value: 1, text: 'The robot shared snacks with you.' },
+      { value: 2, text: 'The robot invited you to play badminton.' },
       { value: 3, text: 'Neither of the above.' }
     ],
     correct: 1 // TODO: confirm against the actual social-care empathy-condition video
   },
   industrial: {
-    question: 'What is happening in the video you just watched?',
+    question: 'What happened in the video you watched?',
     options: [
-      { value: 1, text: 'The robot is having a fight with the human.' },
-      { value: 2, text: 'The robot is passing a tool to help the human.' },
-      { value: 3, text: 'Neither of the above.' }
+      { value: 1, text: 'The robot had a fight with you.' },
+      { value: 2, text: 'The robot passed a bag of tools to help you.' },
+      { value: 3, text: 'The robot asked for your assistance.' }
     ],
     correct: 2 // TODO: confirm against the actual industrial empathy-condition video
   }

@@ -256,3 +256,14 @@ function attentionCheckFor(study, settingId, conditionId) {
   if (study !== 1 || conditionId !== 'empathy') return null;
   return ATTENTION_CHECKS[settingId] || null;
 }
+
+// Builds the single combined question string shown to the participant,
+// e.g. "What is happening in the video you just watched? The robot is
+// offering apples to the human > Select 1, The robot is inviting the
+// human to play badminton > Select 2, Neither of the above > Select 3"
+function attentionCheckQuestionText(check) {
+  const optionText = check.options
+    .map(opt => `${opt.text} > Select ${opt.value}`)
+    .join(', ');
+  return `${check.question} ${optionText}`;
+}

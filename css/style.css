@@ -194,28 +194,6 @@ h3 {
 .likert-opt:hover { background: var(--accent-soft); }
 .likert-opt input { accent-color: var(--accent); width: 16px; height: 16px; }
 
-.attn-section .likert-text { margin-bottom: 12px; }
-.attn-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.attn-opt {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14.5px;
-  color: var(--ink);
-  cursor: pointer;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-.attn-opt:hover { background: var(--accent-soft); }
-.attn-opt input { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
-.attn-block.invalid { background: #FBEAE8; border-radius: var(--radius); padding: 10px; margin: -10px; }
-.attn-block.invalid .likert-text { color: var(--error); font-weight: 600; }
-
 @media (max-width: 480px) {
   .card { padding: 26px 18px; }
   .likert-scale { gap: 2px; }

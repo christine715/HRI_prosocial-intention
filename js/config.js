@@ -258,12 +258,19 @@ function attentionCheckFor(study, settingId, conditionId) {
 }
 
 // Builds the single combined question string shown to the participant,
-// e.g. "What is happening in the video you just watched? The robot is
-// offering apples to the human > Select 1, The robot is inviting the
-// human to play badminton > Select 2, Neither of the above > Select 3"
+// e.g. "What is happening in the video you just watched? Select 1 if the
+// robot is offering apples to the human; Select 2 if the robot is inviting
+// the human to play badminton; Select 3 if neither of the above."
 function attentionCheckQuestionText(check) {
   const optionText = check.options
-    .map(opt => `${opt.text} > Select ${opt.value}`)
-    .join(', ');
-  return `${check.question} ${optionText}`;
+    .map(opt => {
+      // lowercase the first letter and drop the trailing period so it reads
+      // naturally after "Select N if ..." (e.g. "The robot is offering..."
+      // -> "if the robot is offering...")
+      const text = opt.text.trim().replace(/\.$/, '');
+      const lower = text.charAt(0).toLowerCase() + text.slice(1);
+      return `Select ${opt.value} if ${lower}`;
+    })
+    .join('; ');
+  return `${check.question} ${optionText}.`;
 }

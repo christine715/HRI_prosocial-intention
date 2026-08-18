@@ -199,15 +199,14 @@ const QUESTION_SECTIONS = [
     title: 'Perceived Altruism & Egoism',
     studies: [2],
     items: [
-      { id: 'al1', text: "The robot's help seemed genuinely focused on benefiting the other person." },
-      { id: 'al2', text: "This robot appeared to act in the person's interest, not its own." },
-      { id: 'al3', text: 'The robot seemed to give help freely, without expecting anything in return.' },
-      { id: 'al4', text: 'This robot appeared to notice and respond to what the person actually needed.' },
-      { id: 'eg1', text: "The robot's help seemed primarily designed to serve its own objectives." },
-      { id: 'eg2', text: 'This robot appeared to treat the person as a means to its own ends.' },
-      { id: 'eg3', text: 'The robot seemed indifferent to whether its help was actually good for the person.' },
-      { id: 'eg4', text: 'This robot would likely stop helping if it no longer benefited from doing so.' },
-      { id: 'eg5', text: "The robot's assistance felt transactional rather than genuinely caring." }
+      { id: 'al1', text: 'The robot helped because it genuinely cared about how I was doing.' },
+      { id: 'al2', text: "The robot's main concern was making things easier for me, not for itself." },
+      { id: 'al3', text: 'The robot would have helped me even if it got nothing out of it.' },
+      { id: 'al4', text: 'The robot paid attention to what I actually needed in that moment.' },
+      { id: 'eg1', text: 'The robot seemed to be helping to relieve its own discomfort, not mine.' },
+      { id: 'eg2', text: 'The robot was more focused on how it would feel than on how I would feel.' },
+      { id: 'eg3', text: "It didn't seemed to help mainly because it needed to feel like it had done something." },
+      { id: 'eg4', text: "If helping hadn't benefited the robot in some way, it probably wouldn't have bothered." }
     ]
   }
 ];
@@ -232,19 +231,19 @@ function itemIdsForStudy(study) {
    ---------------------------------------------------------------------- */
 const ATTENTION_CHECKS = {
   social_care: {
-    question: 'What is happening in the video you watched?',
+    question: 'What is happening in the video you just watched?',
     options: [
-      { value: 1, text: 'The robot is offering food to the human.' },
+      { value: 1, text: 'The robot is offering apples to the human.' },
       { value: 2, text: 'The robot is inviting the human to play badminton.' },
       { value: 3, text: 'Neither of the above.' }
     ],
     correct: 1 // TODO: confirm against the actual social-care empathy-condition video
   },
   industrial: {
-    question: 'What is happening in the video you watched?',
+    question: 'What is happening in the video you just watched?',
     options: [
       { value: 1, text: 'The robot is having a fight with the human.' },
-      { value: 2, text: 'The robot is passing a bag of tool to help the human.' },
+      { value: 2, text: 'The robot is passing a tool to help the human.' },
       { value: 3, text: 'Neither of the above.' }
     ],
     correct: 2 // TODO: confirm against the actual industrial empathy-condition video

@@ -253,6 +253,13 @@ function renderTrialScreen(step, displayIndex) {
     toggleBtn.textContent = contextIframe.classList.contains('hidden') ? 'Rewatch introduction video' : 'Hide introduction video';
   });
 
+  // --- attention check (only on the Study 1 "empathy" trial, per setting) ---
+  // Rendered as one extra row inside "Trust & Continued Interaction" below,
+  // using the same 1-7 radio grid as every other item - not a separate block.
+  const attentionCheck = attentionCheckFor(step.study, step.setting.id, step.condition.id);
+  let attentionAnswer = existing && existing.attention_check ? existing.attention_check.response : undefined;
+  let attentionRowRef = null;
+
   // --- survey sections (filtered by study) ---
   const rowRefs = {}; // item_id -> row element, for invalid highlighting
   const sections = sectionsForStudy(step.study).map(section => {
@@ -275,6 +282,25 @@ function renderTrialScreen(step, displayIndex) {
       rowRefs[item.id] = row;
       return row;
     });
+
+    if (attentionCheck && section.id === 'trust_interaction') {
+      const rowId = `attn_${step.setting.id}_${displayIndex}`;
+      const radios = [1, 2, 3, 4, 5, 6, 7].map(v => {
+        const input = el('input', { type: 'radio', name: rowId, value: v });
+        if (attentionAnswer === v) input.checked = true;
+        input.addEventListener('change', () => {
+          attentionAnswer = v;
+          attentionRowRef.classList.remove('invalid');
+        });
+        return el('label', { class: 'likert-opt' }, [input, el('span', {}, String(v))]);
+      });
+      attentionRowRef = el('div', { class: 'likert-row' }, [
+        el('p', { class: 'likert-text' }, attentionCheckQuestionText(attentionCheck)),
+        el('div', { class: 'likert-scale' }, radios)
+      ]);
+      rows.push(attentionRowRef);
+    }
+
     return el('div', { class: 'section-block' }, [
       el('h3', {}, section.title),
       el('div', { class: 'likert-anchors' }, [el('span', {}, 'Strongly Disagree'), el('span', {}, 'Strongly Agree')]),
@@ -284,32 +310,6 @@ function renderTrialScreen(step, displayIndex) {
 
   const allItemIds = itemIdsForStudy(step.study);
   progress.update(Object.keys(answers).length);
-
-  // --- attention check (only on the Study 1 "empathy" trial, per setting) ---
-  const attentionCheck = attentionCheckFor(step.study, step.setting.id, step.condition.id);
-  let attentionAnswer = existing && existing.attention_check ? existing.attention_check.response : undefined;
-  let attentionRowRef = null;
-  const attentionBlock = attentionCheck ? (() => {
-    const rowId = `attn_${step.setting.id}_${displayIndex}`;
-    const options = attentionCheck.options.map(opt => {
-      const input = el('input', { type: 'radio', name: rowId, value: opt.value });
-      if (attentionAnswer === opt.value) input.checked = true;
-      input.addEventListener('change', () => {
-        attentionAnswer = opt.value;
-        attentionRow.classList.remove('invalid');
-      });
-      return el('label', { class: 'attn-opt' }, [input, el('span', {}, opt.text)]);
-    });
-    const attentionRow = el('div', { class: 'attn-options' }, options);
-    attentionRowRef = el('div', { class: 'attn-block' }, [
-      el('p', { class: 'likert-text' }, attentionCheck.question),
-      attentionRow
-    ]);
-    return el('div', { class: 'section-block attn-section' }, [
-      el('h3', {}, 'Attention Check'),
-      attentionRowRef
-    ]);
-  })() : null;
 
   const surveyErrorBox = el('p', { class: 'error hidden' }, 'Please answer the highlighted questions above.');
 
@@ -345,7 +345,7 @@ function renderTrialScreen(step, displayIndex) {
       completed_at: new Date().toISOString(),
       answers,
       attention_check: attentionCheck ? {
-        question: attentionCheck.question,
+        question: attentionCheckQuestionText(attentionCheck),
         response: attentionAnswer,
         correct: attentionCheck.correct,
         passed: attentionAnswer === attentionCheck.correct
@@ -370,7 +370,6 @@ function renderTrialScreen(step, displayIndex) {
     el('p', { class: 'hint' }, 'You can rewatch the introduction video for this scenario at any time before submitting.'),
     contextIframe,
     ...sections,
-    attentionBlock,
     surveyErrorBox,
     el('div', { class: 'row gap' }, [backBtn, primaryBtn].filter(Boolean))
   ]));

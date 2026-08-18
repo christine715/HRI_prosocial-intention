@@ -218,3 +218,42 @@ function sectionsForStudy(study) {
 function itemIdsForStudy(study) {
   return sectionsForStudy(study).flatMap(s => s.items.map(i => i.id));
 }
+
+/* -------------------------------------------------------------------------
+   ATTENTION CHECKS
+   Shown once per setting, ONLY on the Study 1 "empathy" trial for that
+   setting (i.e. study === 1 && condition.id === 'empathy'). Participants
+   pick which of three descriptions matches what they just watched.
+
+   IMPORTANT: `correct` must be set to whichever option value (1, 2, or 3)
+   actually matches the footage for that setting's empathy-condition video.
+   The values below are placeholders - verify against the real clips before
+   launching.
+   ---------------------------------------------------------------------- */
+const ATTENTION_CHECKS = {
+  social_care: {
+    question: 'What is happening in the video you watched?',
+    options: [
+      { value: 1, text: 'The robot is offering food to the human.' },
+      { value: 2, text: 'The robot is inviting the human to play badminton.' },
+      { value: 3, text: 'Neither of the above.' }
+    ],
+    correct: 1 // TODO: confirm against the actual social-care empathy-condition video
+  },
+  industrial: {
+    question: 'What is happening in the video you watched?',
+    options: [
+      { value: 1, text: 'The robot is having a fight with the human.' },
+      { value: 2, text: 'The robot is passing a bag of tool to help the human.' },
+      { value: 3, text: 'Neither of the above.' }
+    ],
+    correct: 2 // TODO: confirm against the actual industrial empathy-condition video
+  }
+};
+
+// Returns the attention check for this trial, or null if this trial
+// (study/condition) shouldn't have one.
+function attentionCheckFor(study, settingId, conditionId) {
+  if (study !== 1 || conditionId !== 'empathy') return null;
+  return ATTENTION_CHECKS[settingId] || null;
+}
